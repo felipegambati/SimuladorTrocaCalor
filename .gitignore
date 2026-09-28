@@ -1,0 +1,18 @@
+# Visual Studio
+.vs/
+bin/
+obj/
+
+# Arquivos de usuário do Visual Studio
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build
+Debug/
+Release/
+
+# Sistema operacional
+Thumbs.db
+.DS_Store
