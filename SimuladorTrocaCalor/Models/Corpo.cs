@@ -12,10 +12,8 @@ namespace SimuladorTrocaCalor.Models
         private double Volume => lado * lado * lado; // m³
         public double AreaDaFace => lado * lado; // m²
 
-        // A massa depende da densidade do material e do volume do cubo.
+        // A massa depende da densidade do material e do volume do cubo
         public double Massa => Material.Densidade * Volume; // kg
-
-        // O professor fixa a referência de temperatura em 0 K: Delta T = T - 0.
         public double CalorSensivel => Massa * Material.CalorEspecifico * Temperatura; // J
 
         private double CapacidadeTermica => Massa * Material.CalorEspecifico; // J/K
@@ -29,7 +27,7 @@ namespace SimuladorTrocaCalor.Models
 
         public void AlterarMaterial(Material novoMaterial)
         {
-            // A temperatura permanece igual; massa e calor sensível passam a refletir o novo material.
+            // A temperatura permanece igual; massa e calor sensível passam a refletir o novo material
             material = novoMaterial;
         }
 
@@ -41,7 +39,7 @@ namespace SimuladorTrocaCalor.Models
         public void AplicarVariacaoDeEnergia(double variacaoEmJoules)
         {
             double novoCalorSensivel = CalorSensivel + variacaoEmJoules;
-            // Isolando T em Q = m*c*T, obtemos a nova temperatura após a troca.
+            // Isolando T em Q = m*c*T, conseguimos a nova temperatura após a troca
             temperatura = novoCalorSensivel / CapacidadeTermica;
         }
     }

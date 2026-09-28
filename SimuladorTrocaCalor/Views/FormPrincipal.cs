@@ -5,7 +5,7 @@ using SimuladorTrocaCalor.Models;
 
 namespace SimuladorTrocaCalor
 {
-    // View: recebe os comandos do usuário e mostra o estado calculado pelo Controller.
+    // View: recebe os comandos do usuário e mostra o estado calculado pelo Controller
     public partial class FormPrincipal : Form
     {
         private readonly SimulacaoController controller = new SimulacaoController();

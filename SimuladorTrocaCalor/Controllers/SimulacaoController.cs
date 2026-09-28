@@ -6,12 +6,12 @@ namespace SimuladorTrocaCalor.Controllers
     public class SimulacaoController
     {
         private const int limiteDePassos = 10000;
-        private const double IntervaloDoPasso = 1.0; // s; o enunciado não define outro intervalo.
+        private const double IntervaloDoPasso = 1.0; // s
         private const double ToleranciaDeEquilibrio = 0.01; // K
         private readonly ListaMateriais materiais;
         private Simulacao? simulacaoAtual;
 
-        // Entrega uma cópia dos nós para que a lista fixa não seja alterada pela View.
+        // Entrega uma cópia dos nós para que a lista fixa não seja alterada pela View
         public ListaMateriais Materiais
         {
             get
@@ -31,8 +31,7 @@ namespace SimuladorTrocaCalor.Controllers
 
         public SimulacaoController()
         {
-            // Valores aproximados de referência, em SI. O k é usado numericamente
-            // na fórmula simplificada do professor, sem dividir por Delta x.
+            // Valores aproximados de referência
             materiais = new ListaMateriais();
             materiais.Adicionar(new Material("Cobre", 8960, 385, 401));
             materiais.Adicionar(new Material("Alumínio", 2700, 900, 237));
@@ -44,6 +43,7 @@ namespace SimuladorTrocaCalor.Controllers
             materiais.Adicionar(new Material("Madeira", 700, 1700, 0.12));
         }
 
+        // Cria simulação
         public void CriarSimulacao(int tamanho, double lado, Material material, double temperatura)
         {
             if (tamanho < 1 || lado <= 0 || temperatura < 0 || !materiais.Contem(material))
@@ -54,6 +54,7 @@ namespace SimuladorTrocaCalor.Controllers
             simulacaoAtual = new Simulacao(tamanho, lado, material, temperatura);
         }
 
+        // Alterar material de um corpo específico na matriz
         public void AlterarMaterial(int linha, int coluna, Material material)
         {
             if (!materiais.Contem(material))
@@ -64,6 +65,7 @@ namespace SimuladorTrocaCalor.Controllers
             ObterCorpo(linha, coluna).AlterarMaterial(material);
         }
 
+        // Alterar temperatura de um corpo específico na matriz
         public void AlterarTemperatura(int linha, int coluna, double temperatura)
         {
             if (temperatura < 0)
@@ -74,10 +76,10 @@ namespace SimuladorTrocaCalor.Controllers
             ObterCorpo(linha, coluna).AlterarTemperatura(temperatura);
         }
 
+        // Obter corpo específico da matriz
         public Corpo ObterCorpo(int linha, int coluna)
         {
-            if (SimulacaoAtual == null || linha < 0 || coluna < 0 ||
-                linha >= SimulacaoAtual.Tamanho || coluna >= SimulacaoAtual.Tamanho)
+            if (SimulacaoAtual == null || linha < 0 || coluna < 0 || linha >= SimulacaoAtual.Tamanho || coluna >= SimulacaoAtual.Tamanho)
             {
                 throw new ArgumentException("Selecione um corpo da matriz.");
             }
@@ -85,6 +87,7 @@ namespace SimuladorTrocaCalor.Controllers
             return SimulacaoAtual.ObterCorpo(linha, coluna);
         }
 
+        // Verifica se a simulação atingiu o equilíbrio térmico
         public bool EstaEmEquilibrio()
         {
             if (SimulacaoAtual == null)
@@ -105,129 +108,91 @@ namespace SimuladorTrocaCalor.Controllers
                 }
             }
 
-            // A diferença entre os extremos testa toda a matriz, não só um contato.
+            // A diferença entre os extremos testa toda a matriz, não só um contato
             return maior - menor <= ToleranciaDeEquilibrio;
         }
 
+        // Verifica se é possível executar mais um passo na simulação
         public bool PodeExecutarPasso()
         {
             return SimulacaoAtual != null && !EstaEmEquilibrio() &&
                    SimulacaoAtual.NumeroDePassos < limiteDePassos;
         }
 
+        // Executa um passo da simulação, calculando as transferências de energia entre os corpos
         public void ExecutarPasso()
         {
-            if (!PodeExecutarPasso() || SimulacaoAtual == null)
-            {
-                return;
-            }
+            if (!PodeExecutarPasso() || SimulacaoAtual == null) { return; }
 
             int tamanho = SimulacaoAtual.Tamanho;
             double[,] variacoesDeEnergia = new double[tamanho, tamanho];
-            double[,] energiaCedida = new double[tamanho, tamanho];
-            double[,] transferenciasDireita = new double[tamanho, tamanho];
-            double[,] transferenciasBaixo = new double[tamanho, tamanho];
 
             for (int linha = 0; linha < tamanho; linha++)
             {
                 for (int coluna = 0; coluna < tamanho; coluna++)
                 {
-                    // Só direita e baixo: cada face compartilhada aparece uma vez,
-                    // sem incluir vizinhos diagonais.
+                    // Só direita e baixo: cada face compartilhada aparece uma vez, sem incluir vizinhos diagonais
                     if (coluna + 1 < tamanho)
                     {
-                        double energia = CalcularContato(linha, coluna, linha, coluna + 1);
-                        transferenciasDireita[linha, coluna] = energia;
-                        if (energia > 0) energiaCedida[linha, coluna] += energia;
-                        else energiaCedida[linha, coluna + 1] -= energia;
+                        CalcularContato(linha, coluna, linha, coluna + 1, variacoesDeEnergia);
                     }
 
                     if (linha + 1 < tamanho)
                     {
-                        double energia = CalcularContato(linha, coluna, linha + 1, coluna);
-                        transferenciasBaixo[linha, coluna] = energia;
-                        if (energia > 0) energiaCedida[linha, coluna] += energia;
-                        else energiaCedida[linha + 1, coluna] -= energia;
-                    }
-                }
-            }
-
-            // Se um corpo cederia mais que seu Q inicial para vários vizinhos,
-            // reduzimos todas as suas saídas na mesma proporção. Cada receptor
-            // recebe exatamente a energia retirada do cedente.
-            for (int linha = 0; linha < tamanho; linha++)
-            {
-                for (int coluna = 0; coluna < tamanho; coluna++)
-                {
-                    if (coluna + 1 < tamanho)
-                    {
-                        AcumularTransferencia(linha, coluna, linha, coluna + 1,
-                            transferenciasDireita[linha, coluna], energiaCedida, variacoesDeEnergia);
-                    }
-
-                    if (linha + 1 < tamanho)
-                    {
-                        AcumularTransferencia(linha, coluna, linha + 1, coluna,
-                            transferenciasBaixo[linha, coluna], energiaCedida, variacoesDeEnergia);
+                        CalcularContato(linha, coluna, linha + 1, coluna, variacoesDeEnergia);
                     }
                 }
             }
 
             // Todos os contatos usam as temperaturas do início do passo. Só após
-            // acumular as trocas atualizamos os corpos, evitando efeito da ordem do loop.
+            // acumular as trocas atualizamos os corpos, evitando efeito da ordem do loop
             for (int linha = 0; linha < tamanho; linha++)
             {
                 for (int coluna = 0; coluna < tamanho; coluna++)
                 {
-                    SimulacaoAtual.ObterCorpo(linha, coluna)
-                        .AplicarVariacaoDeEnergia(variacoesDeEnergia[linha, coluna]);
+                    SimulacaoAtual.ObterCorpo(linha, coluna).AplicarVariacaoDeEnergia(variacoesDeEnergia[linha, coluna]);
                 }
             }
 
             SimulacaoAtual.RegistrarPasso();
         }
 
-        private double CalcularContato(int linhaA, int colunaA, int linhaB, int colunaB)
+        // Calcula a troca entre dois vizinhos e guarda as variações para aplicar ao fim do passo
+        private void CalcularContato(int linhaA, int colunaA, int linhaB, int colunaB, double[,] variacoesDeEnergia)
         {
             Corpo primeiro = SimulacaoAtual!.ObterCorpo(linhaA, colunaA);
             Corpo segundo = SimulacaoAtual.ObterCorpo(linhaB, colunaB);
-            double diferencaDeTemperatura = Math.Abs(primeiro.Temperatura - segundo.Temperatura);
-            if (diferencaDeTemperatura == 0) return 0;
+            if (primeiro.CalorSensivel == segundo.CalorSensivel) return;
 
-            // Conforme o enunciado: q = k * A * Delta T, sem Delta x.
-            // A face do cubo tem área lado²; materiais distintos usam o menor k.
-            double menorK = Math.Min(primeiro.Material.CondutividadeTermica,
-                                     segundo.Material.CondutividadeTermica);
+            double diferencaDeTemperatura = Math.Abs(primeiro.Temperatura - segundo.Temperatura);
+            if (diferencaDeTemperatura == 0) return;
+
+            // q = k * A * Delta T
+            // A face do cubo tem área lado², materiais diferentes usam o menor k
+            double menorK = Math.Min(primeiro.Material.CondutividadeTermica, segundo.Material.CondutividadeTermica);
             double taxaDeCalor = menorK * primeiro.AreaDaFace * diferencaDeTemperatura;
             double energia = taxaDeCalor * IntervaloDoPasso;
 
-            // O maior Q cede calor quando isso também aproxima as temperaturas.
-            // Se Q e T indicarem sentidos opostos, usamos o corpo mais quente para
-            // cumprir o objetivo expresso de chegar ao equilíbrio térmico.
-            bool primeiroMaisQuente = primeiro.Temperatura > segundo.Temperatura;
+            // O sentido depende apenas do calor sensível Q, conforme o enunciado
             bool primeiroCede = primeiro.CalorSensivel > segundo.CalorSensivel;
-            if (primeiro.CalorSensivel == segundo.CalorSensivel ||
-                primeiroCede != primeiroMaisQuente)
+            int linhaCedente = primeiroCede ? linhaA : linhaB;
+            int colunaCedente = primeiroCede ? colunaA : colunaB;
+            Corpo cedente = primeiroCede ? primeiro : segundo;
+
+            // Considera o saldo já acumulado para que nenhum corpo ceda mais energia do que possui
+            double energiaDisponivel = Math.Max(0, cedente.CalorSensivel + variacoesDeEnergia[linhaCedente, colunaCedente]);
+            energia = Math.Min(energia, energiaDisponivel);
+
+            if (primeiroCede)
             {
-                primeiroCede = primeiroMaisQuente;
+                variacoesDeEnergia[linhaA, colunaA] -= energia;
+                variacoesDeEnergia[linhaB, colunaB] += energia;
             }
-            return primeiroCede ? energia : -energia;
-        }
-
-        private void AcumularTransferencia(int linhaA, int colunaA, int linhaB, int colunaB,
-                                            double energia, double[,] energiaCedida,
-                                            double[,] variacoesDeEnergia)
-        {
-            if (energia == 0) return;
-
-            int linhaCedente = energia > 0 ? linhaA : linhaB;
-            int colunaCedente = energia > 0 ? colunaA : colunaB;
-            Corpo cedente = SimulacaoAtual!.ObterCorpo(linhaCedente, colunaCedente);
-            double proporcao = Math.Min(1.0, cedente.CalorSensivel /
-                                             energiaCedida[linhaCedente, colunaCedente]);
-            double energiaReal = energia * proporcao;
-            variacoesDeEnergia[linhaA, colunaA] -= energiaReal;
-            variacoesDeEnergia[linhaB, colunaB] += energiaReal;
+            else
+            {
+                variacoesDeEnergia[linhaB, colunaB] -= energia;
+                variacoesDeEnergia[linhaA, colunaA] += energia;
+            }
         }
     }
 }

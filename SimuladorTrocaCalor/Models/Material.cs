@@ -9,7 +9,7 @@ namespace SimuladorTrocaCalor.Models
 
         public string Nome { get { return nome; } }
         public double Densidade { get { return densidade; } } // kg/m³
-        public double CalorEspecifico { get { return calorEspecifico; } } // J/(kg·K)
+        public double CalorEspecifico { get { return calorEspecifico; } } // J/(kg*K)
         public double CondutividadeTermica { get { return condutividadeTermica; } }
 
         public Material(string nome, double densidade, double calorEspecifico, double condutividadeTermica)
