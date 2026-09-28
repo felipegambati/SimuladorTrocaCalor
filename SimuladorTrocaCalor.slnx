@@ -1,6 +1,4 @@
 <Solution>
-  <Folder Name="/Solution Items/">
-    <File Path="CONTEXTO_PROJETO.md" />
-  </Folder>
+  <Folder Name="/Solution Items/" />
   <Project Path="SimuladorTrocaCalor/SimuladorTrocaCalor.csproj" />
 </Solution>
