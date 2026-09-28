@@ -1,3 +1,4 @@
+using SimuladorTrocaCalor.Estruturas;
 using SimuladorTrocaCalor.Models;
 
 namespace SimuladorTrocaCalor.Controllers
@@ -7,11 +8,24 @@ namespace SimuladorTrocaCalor.Controllers
         private const int limiteDePassos = 10000;
         private const double IntervaloDoPasso = 1.0; // s; o enunciado não define outro intervalo.
         private const double ToleranciaDeEquilibrio = 0.01; // K
-        private readonly List<Material> materiais;
+        private readonly ListaMateriais materiais;
         private Simulacao? simulacaoAtual;
 
-        // Entrega uma cópia para que a lista fixa não seja alterada pela View.
-        public List<Material> Materiais { get { return new List<Material>(materiais); } }
+        // Entrega uma cópia dos nós para que a lista fixa não seja alterada pela View.
+        public ListaMateriais Materiais
+        {
+            get
+            {
+                ListaMateriais copia = new ListaMateriais();
+                NoMaterial? atual = materiais.Cabeca;
+                while (atual != null)
+                {
+                    copia.Adicionar(atual.Material);
+                    atual = atual.Proximo;
+                }
+                return copia;
+            }
+        }
         public Simulacao? SimulacaoAtual { get { return simulacaoAtual; } }
         public int LimiteDePassos { get { return limiteDePassos; } }
 
@@ -19,22 +33,20 @@ namespace SimuladorTrocaCalor.Controllers
         {
             // Valores aproximados de referência, em SI. O k é usado numericamente
             // na fórmula simplificada do professor, sem dividir por Delta x.
-            materiais = new List<Material>
-            {
-                new Material("Cobre", 8960, 385, 401),
-                new Material("Alumínio", 2700, 900, 237),
-                new Material("Ferro", 7870, 449, 80),
-                new Material("Aço", 7850, 490, 50),
-                new Material("Chumbo", 11340, 128, 35),
-                new Material("Vidro", 2500, 840, 1.0),
-                new Material("Concreto", 2400, 880, 1.7),
-                new Material("Madeira", 700, 1700, 0.12)
-            };
+            materiais = new ListaMateriais();
+            materiais.Adicionar(new Material("Cobre", 8960, 385, 401));
+            materiais.Adicionar(new Material("Alumínio", 2700, 900, 237));
+            materiais.Adicionar(new Material("Ferro", 7870, 449, 80));
+            materiais.Adicionar(new Material("Aço", 7850, 490, 50));
+            materiais.Adicionar(new Material("Chumbo", 11340, 128, 35));
+            materiais.Adicionar(new Material("Vidro", 2500, 840, 1.0));
+            materiais.Adicionar(new Material("Concreto", 2400, 880, 1.7));
+            materiais.Adicionar(new Material("Madeira", 700, 1700, 0.12));
         }
 
         public void CriarSimulacao(int tamanho, double lado, Material material, double temperatura)
         {
-            if (tamanho < 1 || lado <= 0 || temperatura < 0 || !materiais.Contains(material))
+            if (tamanho < 1 || lado <= 0 || temperatura < 0 || !materiais.Contem(material))
             {
                 throw new ArgumentException("Informe valores válidos para criar a matriz.");
             }
@@ -44,7 +56,7 @@ namespace SimuladorTrocaCalor.Controllers
 
         public void AlterarMaterial(int linha, int coluna, Material material)
         {
-            if (!materiais.Contains(material))
+            if (!materiais.Contem(material))
             {
                 throw new ArgumentException("Material inválido.");
             }

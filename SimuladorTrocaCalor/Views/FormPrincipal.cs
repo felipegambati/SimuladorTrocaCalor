@@ -1,5 +1,6 @@
 using System.Globalization;
 using SimuladorTrocaCalor.Controllers;
+using SimuladorTrocaCalor.Estruturas;
 using SimuladorTrocaCalor.Models;
 
 namespace SimuladorTrocaCalor
@@ -170,9 +171,11 @@ namespace SimuladorTrocaCalor
         {
             lista.DropDownStyle = ComboBoxStyle.DropDownList;
             lista.Width = 130;
-            foreach (Material material in controller.Materiais)
+            NoMaterial? atual = controller.Materiais.Cabeca;
+            while (atual != null)
             {
-                lista.Items.Add(material);
+                lista.Items.Add(atual.Material);
+                atual = atual.Proximo;
             }
             lista.SelectedIndex = 0;
         }
