@@ -16,3 +16,7 @@ Release/
 # Sistema operacional
 Thumbs.db
 .DS_Store
+
+# Arquivos locais de contexto para IA
+AGENTS.md
+CONTEXTO_PROJETO.md
