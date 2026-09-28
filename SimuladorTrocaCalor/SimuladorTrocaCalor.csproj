@@ -14,4 +14,16 @@
     <Folder Include="Views\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Views\FormPrincipal.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Views\FormPrincipal.Designer.cs">
+      <DependentUpon>FormPrincipal.cs</DependentUpon>
+    </Compile>
+    <EmbeddedResource Update="Views\FormPrincipal.resx">
+      <DependentUpon>FormPrincipal.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+
 </Project>
